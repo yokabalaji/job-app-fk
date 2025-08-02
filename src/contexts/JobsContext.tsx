@@ -12,6 +12,8 @@ export interface Job {
 interface JobsContextType {
   jobs: Job[];
   addJob: (job: Omit<Job, 'id' | 'datePosted'>) => void;
+  updateJob: (id: string, job: Omit<Job, 'id' | 'datePosted'>) => void;
+  deleteJob: (id: string) => void;
   getJobById: (id: string) => Job | undefined;
 }
 
@@ -86,6 +88,20 @@ export const JobsProvider: React.FC<JobsProviderProps> = ({ children }) => {
     localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
   };
 
+  const updateJob = (id: string, updatedJob: Omit<Job, 'id' | 'datePosted'>) => {
+    const updatedJobs = jobs.map(job => 
+      job.id === id ? { ...job, ...updatedJob } : job
+    );
+    setJobs(updatedJobs);
+    localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
+  };
+
+  const deleteJob = (id: string) => {
+    const updatedJobs = jobs.filter(job => job.id !== id);
+    setJobs(updatedJobs);
+    localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
+  };
+
   const getJobById = (id: string): Job | undefined => {
     return jobs.find(job => job.id === id);
   };
@@ -93,6 +109,8 @@ export const JobsProvider: React.FC<JobsProviderProps> = ({ children }) => {
   const value: JobsContextType = {
     jobs,
     addJob,
+    updateJob,
+    deleteJob,
     getJobById
   };
 

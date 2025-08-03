@@ -22,7 +22,7 @@ const Register = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect if already authenticated
+
   if (isAuthenticated) {
     navigate('/', { replace: true });
     return null;

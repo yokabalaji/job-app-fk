@@ -23,6 +23,8 @@ const AdminJobTable = () => {
     description: ''
   });
 
+  console.log(jobs, "jobs");
+
   const handleEditClick = (job: Job) => {
     setEditingJob(job);
     setEditForm({
@@ -42,11 +44,20 @@ const AdminJobTable = () => {
       return;
     }
 
-    updateJob(editingJob.id, {
+    // updateJob(editingJob._id, {
+    //   title: editForm.title.trim(),
+    //   company: editForm.company.trim(),
+    //   description: editForm.description.trim(),
+    //   _id: ''
+    // });
+
+    updateJob(editingJob._id, {
+      ...editingJob,
       title: editForm.title.trim(),
       company: editForm.company.trim(),
-      description: editForm.description.trim()
+      description: editForm.description.trim(),
     });
+
 
     toast.success('Job updated successfully!');
     setIsEditDialogOpen(false);
@@ -58,17 +69,24 @@ const AdminJobTable = () => {
     toast.success(`Job "${jobTitle}" deleted successfully!`);
   };
 
-  const truncateText = (text: string, maxLength: number = 50) => {
+  // const truncateText = (text: string, maxLength: number = 50) => {
+  //   if (text.length <= maxLength) return text;
+  //   return text.substring(0, maxLength) + '...';
+  // };
+
+  const truncateText = (text: string | undefined, maxLength: number = 50) => {
+    if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
 
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
@@ -91,7 +109,7 @@ const AdminJobTable = () => {
             </TableHeader>
             <TableBody>
               {jobs.map((job) => (
-                <TableRow key={job.id}>
+                <TableRow key={job._id}>
                   <TableCell className="font-medium">
                     {truncateText(job.title, 30)}
                   </TableCell>
@@ -102,16 +120,16 @@ const AdminJobTable = () => {
                   <TableCell>{formatDate(job.datePosted)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Link to={`/job/${job.id}`}>
+                      <Link to={`/job/${job._id}`}>
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
-                      
-                      <Dialog open={isEditDialogOpen && editingJob?.id === job.id} onOpenChange={setIsEditDialogOpen}>
+
+                      <Dialog open={isEditDialogOpen && editingJob?._id === job._id} onOpenChange={setIsEditDialogOpen}>
                         <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleEditClick(job)}
                           >
@@ -159,9 +177,9 @@ const AdminJobTable = () => {
                               />
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
+                              <Button
+                                type="button"
+                                variant="outline"
                                 onClick={() => setIsEditDialogOpen(false)}
                               >
                                 Cancel
@@ -190,7 +208,7 @@ const AdminJobTable = () => {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleDeleteJob(job.id, job.title)}
+                              onClick={() => handleDeleteJob(job._id, job.title)}
                               className="bg-red-600 hover:bg-red-700"
                             >
                               Delete

@@ -1,7 +1,6 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
-import { useJobs } from '../contexts/JobsContext';
+import { Job, useJobs } from '../contexts/JobsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +10,32 @@ const JobDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { getJobById } = useJobs();
 
+  const [job, setJob] = useState<Job | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJob = async () => {
+      if (!id) return;
+
+      const jobData = await getJobById(id);
+      setJob(jobData ?? null);
+      setLoading(false);
+    };
+
+    fetchJob();
+  }, [id, getJobById]);
+
   if (!id) {
     return <Navigate to="/" replace />;
   }
 
-  const job = getJobById(id);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Loading job details...</p>
+      </div>
+    );
+  }
 
   if (!job) {
     return (
@@ -23,7 +43,7 @@ const JobDetail = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Job Not Found</h1>
           <p className="text-gray-600 mb-6">The job you're looking for doesn't exist.</p>
-          <Link to="/">
+          <Link to="/joblist">
             <Button>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Jobs
@@ -36,23 +56,21 @@ const JobDetail = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
     });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Link to="/" className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-6">
+        <Link to="/joblist" className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Job Listings
         </Link>
 
-        {/* Job Header */}
         <Card className="mb-8">
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -81,9 +99,7 @@ const JobDetail = () => {
           </CardHeader>
         </Card>
 
-        {/* Job Details */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
@@ -99,7 +115,6 @@ const JobDetail = () => {
             </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -113,7 +128,7 @@ const JobDetail = () => {
                   </div>
                   <p className="text-gray-600 ml-6">{job.company}</p>
                 </div>
-                
+
                 <div>
                   <div className="flex items-center mb-2">
                     <MapPin className="h-4 w-4 text-gray-400 mr-2" />
@@ -121,7 +136,7 @@ const JobDetail = () => {
                   </div>
                   <p className="text-gray-600 ml-6">Remote / On-site</p>
                 </div>
-                
+
                 <div>
                   <div className="flex items-center mb-2">
                     <Calendar className="h-4 w-4 text-gray-400 mr-2" />

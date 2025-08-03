@@ -1,8 +1,15 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
+import { jwtDecode } from 'jwt-decode';
+// import { isTokenExpired } from '@/lib/auth';
 
 export interface Job {
-  id: string;
+  _id: string;
   title: string;
   company: string;
   description: string;
@@ -14,7 +21,7 @@ interface JobsContextType {
   addJob: (job: Omit<Job, 'id' | 'datePosted'>) => void;
   updateJob: (id: string, job: Omit<Job, 'id' | 'datePosted'>) => void;
   deleteJob: (id: string) => void;
-  getJobById: (id: string) => Job | undefined;
+  getJobById: (id: string) => Promise<Job | undefined>;
 }
 
 const JobsContext = createContext<JobsContextType | null>(null);
@@ -31,79 +38,210 @@ interface JobsProviderProps {
   children: ReactNode;
 }
 
-// Dummy job data
 const initialJobs: Job[] = [
   {
-    id: '1',
+    _id: '1',
     title: 'Senior Frontend Developer',
     company: 'TechCorp Inc.',
-    description: 'We are looking for an experienced Frontend Developer to join our team. You will be responsible for building user-facing web applications using modern technologies like React, TypeScript, and Tailwind CSS. The ideal candidate should have 5+ years of experience in frontend development and strong problem-solving skills.',
-    datePosted: '2024-01-15'
+    description: 'We are looking for an experienced Frontend Developer...',
+    datePosted: '2024-01-15',
   },
   {
-    id: '2',
+    _id: '2',
     title: 'Full Stack Engineer',
     company: 'StartupXYZ',
-    description: 'Join our fast-growing startup as a Full Stack Engineer. You will work on both frontend and backend technologies including React, Node.js, and PostgreSQL. We offer competitive salary, equity options, and flexible work arrangements.',
-    datePosted: '2024-01-14'
+    description: 'Join our fast-growing startup as a Full Stack Engineer...',
+    datePosted: '2024-01-14',
   },
-  {
-    id: '3',
-    title: 'UX/UI Designer',
-    company: 'Design Studios',
-    description: 'We are seeking a creative UX/UI Designer to design intuitive and engaging user experiences. You should be proficient in Figma, Adobe Creative Suite, and have experience with design systems and user research.',
-    datePosted: '2024-01-13'
-  },
-  {
-    id: '4',
-    title: 'DevOps Engineer',
-    company: 'CloudTech Solutions',
-    description: 'Looking for a DevOps Engineer to help scale our cloud infrastructure. Experience with AWS, Docker, Kubernetes, and CI/CD pipelines required. You will work closely with development teams to ensure smooth deployments and system reliability.',
-    datePosted: '2024-01-12'
-  }
 ];
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  exp: number;
+}
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
+};
+
+const getUserRoleFromToken = (): string => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return '';
+    const decoded = jwtDecode<DecodedToken>(token);
+    return decoded.role || '';
+  } catch (err) {
+    console.error('Invalid token');
+    return '';
+  }
+};
 
 export const JobsProvider: React.FC<JobsProviderProps> = ({ children }) => {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
-    const savedJobs = localStorage.getItem('jobboard_jobs');
-    if (savedJobs) {
-      setJobs(JSON.parse(savedJobs));
-    } else {
-      setJobs(initialJobs);
-      localStorage.setItem('jobboard_jobs', JSON.stringify(initialJobs));
-    }
+    const fetchJobs = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('https://job-app-bk.onrender.com/api/v1/jobs', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch jobs');
+        }
+
+        const result = await res.json();
+        console.log(result, "result");
+
+        setJobs(result.data);
+      } catch (err) {
+        console.error('Error fetching jobs:', err);
+        //setJobs(initialJobs);
+      }
+    };
+    fetchJobs()
+    setUserRole(getUserRoleFromToken());
   }, []);
 
-  const addJob = (newJob: Omit<Job, 'id' | 'datePosted'>) => {
-    const job: Job = {
-      ...newJob,
-      id: Date.now().toString(),
-      datePosted: new Date().toISOString().split('T')[0]
-    };
-    
-    const updatedJobs = [job, ...jobs];
-    setJobs(updatedJobs);
-    localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
+
+  // useEffect(() => {
+  //   const checkTokenValidity = () => {
+  //     const token = localStorage.getItem('token');
+  //     if (!token) return;
+
+  //     if (isTokenExpired(token)) {
+  //       alert('Session expired. You will be logged out.');
+  //       localStorage.removeItem('jobboard_user');
+  //       localStorage.removeItem('token');
+  //       window.location.href = '/'; // or use navigate()
+  //     } else {
+  //       const decoded = jwtDecode<DecodedToken>(token);
+  //       const timeLeft = decoded.exp - Math.floor(Date.now() / 1000);
+
+  //       // Optional: notify user before expiry
+  //       setTimeout(() => {
+  //         alert('Your session is about to expire. Please save your work.');
+  //       }, (timeLeft - 60) * 1000); // warn 60s before
+
+  //       // Auto logout at expiry
+  //       setTimeout(() => {
+  //         alert('Session expired. Logging out.');
+  //         localStorage.removeItem('jobboard_user');
+  //         localStorage.removeItem('token');
+  //         window.location.href = '/';
+  //       }, timeLeft * 1000);
+  //     }
+  //   };
+
+  //   checkTokenValidity();
+  // }, []);
+
+
+  const addJob = async (newJob: Omit<Job, 'id' | 'datePosted'>) => {
+    if (userRole !== 'admin') {
+      alert('Only admin can add jobs');
+      return;
+    }
+
+    try {
+      const res = await fetch('https://job-app-bk.onrender.com/api/v1/jobs', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(newJob),
+      });
+
+      if (!res.ok) throw new Error('Failed to add job');
+
+      const { data } = await res.json();
+
+      console.log(data, "createdJob");
+
+
+      const updatedJobs = [data, ...jobs];
+      setJobs(updatedJobs);
+      localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
+    } catch (err) {
+      console.error(err);
+      alert('Error adding job');
+    }
   };
 
-  const updateJob = (id: string, updatedJob: Omit<Job, 'id' | 'datePosted'>) => {
-    const updatedJobs = jobs.map(job => 
-      job.id === id ? { ...job, ...updatedJob } : job
-    );
-    setJobs(updatedJobs);
-    localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
+  const updateJob = async (id: string, updatedJob: Omit<Job, 'id' | 'datePosted'>) => {
+    if (userRole !== 'admin') {
+      alert('Only admin can update jobs');
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://job-app-bk.onrender.com/api/v1/jobs/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updatedJob),
+      });
+
+      if (!res.ok) throw new Error('Failed to update job');
+
+      const {data} = await res.json();
+
+      const updatedJobs = jobs.map((j) => (j._id === id ? data : j));
+      console.log(updatedJobs, "updatedJobs");
+
+      setJobs(updatedJobs);
+      localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
+    } catch (err) {
+      console.error(err);
+      alert('Error updating job');
+    }
   };
 
-  const deleteJob = (id: string) => {
-    const updatedJobs = jobs.filter(job => job.id !== id);
-    setJobs(updatedJobs);
-    localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
+  const deleteJob = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/v1/jobs/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!res.ok) throw new Error('Failed to delete job');
+
+      const updatedJobs = jobs.filter((job) => job._id !== id);
+      setJobs(updatedJobs);
+      localStorage.setItem('jobboard_jobs', JSON.stringify(updatedJobs));
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting job');
+    }
   };
 
-  const getJobById = (id: string): Job | undefined => {
-    return jobs.find(job => job.id === id);
+  const getJobById = async (id: string): Promise<Job | undefined> => {
+    try {
+      const res = await fetch(`https://job-app-bk.onrender.com/api/v1/jobs/${id}`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch job');
+
+      const job = await res.json();
+
+
+
+      return await job.data;
+    } catch (err) {
+      console.error(err);
+      alert('Error fetching job');
+      return undefined;
+    }
   };
 
   const value: JobsContextType = {
@@ -111,12 +249,8 @@ export const JobsProvider: React.FC<JobsProviderProps> = ({ children }) => {
     addJob,
     updateJob,
     deleteJob,
-    getJobById
+    getJobById,
   };
 
-  return (
-    <JobsContext.Provider value={value}>
-      {children}
-    </JobsContext.Provider>
-  );
+  return <JobsContext.Provider value={value}>{children}</JobsContext.Provider>;
 };

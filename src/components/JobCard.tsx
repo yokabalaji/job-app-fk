@@ -26,7 +26,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
   };
 
   return (
-    <Link to={`/job/${job.id}`} className="block group">
+    <Link to={`/job/${job._id}`} className="block group">
       <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-purple-200 group-hover:-translate-y-1">
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-3">

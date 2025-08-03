@@ -17,7 +17,6 @@ const AddJob = () => {
   const navigate = useNavigate();
   const { addJob } = useJobs();
   const { isAuthenticated, user } = useAuth();
-  
   const [formData, setFormData] = useState({
     title: '',
     company: '',
@@ -33,21 +32,22 @@ const AddJob = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim() || !formData.company.trim() || !formData.description.trim()) {
       toast.error('Please fill in all fields');
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       addJob({
         title: formData.title.trim(),
         company: formData.company.trim(),
-        description: formData.description.trim()
+        description: formData.description.trim(),
+        _id: ''
       });
-      
+
       toast.success('Job posted successfully!');
       setFormData({ title: '', company: '', description: '' });
     } catch (error) {
@@ -65,7 +65,7 @@ const AddJob = () => {
     }));
   };
 
-  const isAdmin = user?.username === 'admin';
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -81,7 +81,7 @@ const AddJob = () => {
             {isAdmin ? 'Job Management' : 'Post a New Job'}
           </h1>
           <p className="text-gray-600">
-            {isAdmin 
+            {isAdmin
               ? 'Create new jobs and manage existing listings'
               : 'Fill in the details below to create a new job listing'
             }
@@ -112,8 +112,11 @@ const AddJob = () => {
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="title">Job Title</Label>
+                      {/* Job Title */}
+                      <div className="flex items-start gap-4">
+                        <Label htmlFor="title" className="w-40 pt-2 text-right">
+                          Job Title
+                        </Label>
                         <Input
                           id="title"
                           name="title"
@@ -122,12 +125,15 @@ const AddJob = () => {
                           value={formData.title}
                           onChange={handleChange}
                           required
-                          className="text-base"
+                          className="flex-1 text-base"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="company">Company Name</Label>
+                      {/* Company Name */}
+                      <div className="flex items-start gap-4">
+                        <Label htmlFor="company" className="w-40 pt-2 text-right">
+                          Company Name
+                        </Label>
                         <Input
                           id="company"
                           name="company"
@@ -136,45 +142,52 @@ const AddJob = () => {
                           value={formData.company}
                           onChange={handleChange}
                           required
-                          className="text-base"
+                          className="flex-1 text-base"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="description">Job Description</Label>
-                        <Textarea
-                          id="description"
-                          name="description"
-                          placeholder="Provide a detailed description of the job role, responsibilities, requirements, and any other relevant information..."
-                          value={formData.description}
-                          onChange={handleChange}
-                          required
-                          rows={8}
-                          className="resize-none text-base"
-                        />
-                        <p className="text-sm text-gray-500">
-                          Minimum 50 characters. Be specific about the role and requirements.
-                        </p>
+                      {/* Job Description */}
+                      <div className="flex items-start gap-4">
+                        <Label htmlFor="description" className="w-40 pt-2 text-right">
+                          Job Description
+                        </Label>
+                        <div className="flex-1 space-y-2">
+                          <Textarea
+                            id="description"
+                            name="description"
+                            placeholder="Provide a detailed description of the job role, responsibilities, requirements, and any other relevant information..."
+                            value={formData.description}
+                            onChange={handleChange}
+                            required
+                            rows={6}
+                            className="resize-none text-base w-full"
+                          />
+                          <p className="text-sm text-gray-500">
+                            Minimum 50 characters. Be specific about the role and requirements.
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="flex gap-4 pt-4">
+                      {/* Buttons */}
+                      <div className="flex justify-end gap-4 pt-6">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => navigate('/')}
-                          className="flex-1"
+                          className="w-32"
                         >
                           Cancel
                         </Button>
                         <Button
                           type="submit"
                           disabled={isSubmitting}
-                          className="flex-1 bg-purple-600 hover:bg-purple-700"
+                          className="w-32 bg-purple-600 hover:bg-purple-700"
                         >
                           {isSubmitting ? 'Posting...' : 'Post Job'}
                         </Button>
                       </div>
                     </form>
+
                   </CardContent>
                 </Card>
 

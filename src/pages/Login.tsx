@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -24,11 +24,6 @@ const Login = () => {
 
   const from = location.state?.from?.pathname || '/';
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    navigate(from, { replace: true });
-    return null;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,19 +35,20 @@ const Login = () => {
 
     setIsSubmitting(true);
     
-    try {
-      const success = login(formData.username, formData.password);
-      if (success) {
-        toast.success('Login successful!');
-        navigate(from, { replace: true });
-      } else {
-        toast.error('Invalid credentials');
-      }
-    } catch (error) {
-      toast.error('Login failed. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+  try {
+     const success = login(formData.username, formData.password);
+    if (success) {
+      toast.success('Login successful!');
+      navigate('/joblist', { replace: true });
+    } else {
+      toast.error('Invalid credentials');
     }
+} catch (error) {
+  toast.error('Login failed. Please try again.');
+} finally {
+  setIsSubmitting(false);
+}
+
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,17 +123,6 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-6">
-            <Separator className="mb-4" />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDemoLogin}
-              className="w-full"
-            >
-              Use Demo Credentials
-            </Button>
-          </div>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
@@ -148,11 +133,7 @@ const Login = () => {
             </p>
           </div>
 
-          <div className="mt-4 p-3 bg-gray-100 rounded-md">
-            <p className="text-xs text-gray-600 text-center">
-              <strong>Demo:</strong> Any username and password will work for this demo application.
-            </p>
-          </div>
+
         </CardContent>
       </Card>
     </div>

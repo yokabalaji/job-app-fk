@@ -15,42 +15,45 @@ const Navigation = () => {
     <nav className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-2 text-purple-600 font-bold text-xl">
+          <Link to="/joblist" className="flex items-center space-x-2 text-purple-600 font-bold text-xl">
             <Briefcase className="h-6 w-6" />
             <span>JobBoard</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-6">
-            <Link
-              to="/"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/') 
-                  ? 'text-purple-600' 
-                  : 'text-gray-600 hover:text-purple-600'
-              }`}
-            >
-              Jobs
-            </Link>
-            
-            {isAuthenticated && (
-              <Link
-                to="/add-job"
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/add-job') 
-                    ? 'text-purple-600' 
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/joblist"
+                  className={`text-sm font-medium transition-colors ${isActive('/')
+                    ? 'text-purple-600'
                     : 'text-gray-600 hover:text-purple-600'
-                }`}
-              >
-                Post Job
-              </Link>
-            )}
+                    }`}
+                >
+                  Jobs
+                </Link>
+                <Link
+                  to="/add-job"
+                  className={`text-sm font-medium transition-colors ${isActive('/add-job')
+                    ? 'text-purple-600'
+                    : 'text-gray-600 hover:text-purple-600'
+                    }`}
+                >
+                  Post Job
+                </Link>
+
+              </>
+            ) : null}
+
+
+
           </div>
 
           <div className="flex items-center space-x-3">
             {isAuthenticated ? (
               <>
                 <span className="text-sm text-gray-600 hidden sm:block">
-                  Welcome, {user?.username}
+                  Welcome, {user?.role}
                 </span>
                 <Link to="/add-job" className="md:hidden">
                   <Button size="sm" variant="outline">
@@ -64,12 +67,12 @@ const Navigation = () => {
               </>
             ) : (
               <>
-                <Link to="/login">
+                {/* <Link to="/login">
                   <Button variant="outline" size="sm">
                     <User className="h-4 w-4" />
                     <span className="hidden sm:ml-2 sm:block">Login</span>
                   </Button>
-                </Link>
+                </Link> */}
                 <Link to="/register">
                   <Button size="sm">
                     Sign Up

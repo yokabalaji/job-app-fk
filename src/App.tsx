@@ -13,7 +13,7 @@ import JobDetail from "./pages/JobDetail";
 import AddJob from "./pages/AddJob";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import NotFound from "./pages/NotFound";
+                  import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
